@@ -1,12 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  experimental: { optimizePackageImports: ['lucide-react'] },
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: '**.vercel-storage.com' },
-      { protocol: 'https', hostname: 'filespay.org' }
-    ]
-  }
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'placehold.co',
+            },
+        ],
+    },
 };
-module.exports = nextConfig;
+
+export default nextConfig;
