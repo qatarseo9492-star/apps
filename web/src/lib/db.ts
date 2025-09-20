@@ -1,9 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 
-// This function creates a new neon sql instance.
-// The DATABASE_URL is automatically read from the .env file by Next.js.
+// Ensure the environment variable is set before creating a connection
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
+// Create and export the 'sql' instance for querying
 export const sql = neon(process.env.DATABASE_URL);
