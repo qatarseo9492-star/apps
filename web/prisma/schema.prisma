@@ -66,10 +66,10 @@ model SoftwareVersion {
   createdBy       String?
 
   /// Back-reference for Software.currentVersion
-  currentOf       Software?       @relation("CurrentVersion")
+  currentOf       Software? @relation("CurrentVersion")
 
-  /// Back-reference for DownloadLog.version (explicit name to avoid ambiguity)
-  downloadLogs    DownloadLog[]   @relation("VersionDownloadLogs")
+  /// Back-reference for DownloadLog.version (explicitly named)
+  downloadLogs    DownloadLog[] @relation("VersionDownloadLogs")
 
   /// Extras
   mirrors         Mirror[]
