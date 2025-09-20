@@ -47,7 +47,10 @@ async function main() {
     }
   });
 
-  await db.software.update({ where: { id: sw.id }, data: { currentVersionId: v.id, lastUpdatedAt: new Date() } });
+  await db.software.update({
+    where: { id: sw.id },
+    data: { currentVersionId: v.id, lastUpdatedAt: new Date() }
+  });
 
   await db.fAQ.createMany({
     data: [
