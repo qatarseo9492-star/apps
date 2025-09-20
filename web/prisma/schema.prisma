@@ -30,7 +30,7 @@ model Software {
   category         Category? @relation(fields: [categoryId], references: [id])
   categoryId       String?
 
-  /// Current version relation (one-to-one)
+  /// One-to-one: current version of this software
   currentVersion   SoftwareVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
   currentVersionId String?
 
@@ -65,17 +65,15 @@ model SoftwareVersion {
   isFeatured      Boolean @default(false)
   createdBy       String?
 
-  /// Mirrors for this specific version
+  /// Back-reference for Software.currentVersion
+  currentOf       Software?       @relation("CurrentVersion")
+
+  /// Back-reference for DownloadLog.version (explicit name to avoid ambiguity)
+  downloadLogs    DownloadLog[]   @relation("VersionDownloadLogs")
+
+  /// Extras
   mirrors         Mirror[]
-
-  /// Optional media attached specifically to this version
   media           Media[]
-
-  /// Back relation for Software.currentVersion
-  currentFor      Software? @relation("CurrentVersion")
-
-  /// Back relation for DownloadLog.version
-  downloadLogs    DownloadLog[]
 
   createdAt       DateTime @default(now())
 }
@@ -145,8 +143,11 @@ model DownloadLog {
   id         String          @id @default(cuid())
   software   Software        @relation(fields: [softwareId], references: [id])
   softwareId String
-  version    SoftwareVersion @relation(fields: [versionId], references: [id])
+
+  /// Version relation with explicit name; opposite is SoftwareVersion.downloadLogs
+  version    SoftwareVersion @relation("VersionDownloadLogs", fields: [versionId], references: [id])
   versionId  String
+
   country    String?
   referrer   String?
   userAgent  String?
