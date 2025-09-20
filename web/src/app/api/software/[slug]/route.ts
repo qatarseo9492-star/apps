@@ -1,0 +1,37 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/db/client';
+import { sql } from '@vercel/postgres';
+
+export async function GET(_: Request, { params }:{ params:{ slug:string }}) {
+  const r = await db.execute(sql`select * from software where slug=${params.slug} limit 1`);
+  if (!r.rows.length) return NextResponse.json({ ok:false, error:'Not found' }, { status:404 });
+  return NextResponse.json({ ok:true, item: r.rows[0] });
+}
+
+export async function PUT(req: Request, { params }:{ params:{ slug:string }}) {
+  try {
+    const body = await req.json().catch(()=> ({}));
+    await db.execute(sql`
+      update software set
+        name = ${body.name ?? null},
+        short_desc = ${body.shortDesc ?? null},
+        long_desc = ${body.longDesc ?? null},
+        license = ${body.license ?? null},
+        os = ${Array.isArray(body.os) ? body.os : null}::jsonb,
+        vendor_slug = ${body.vendorSlug ?? null},
+        category_slug = ${body.categorySlug ?? null},
+        seo_title = ${body.seoTitle ?? null},
+        seo_description = ${body.seoDescription ?? null},
+        last_updated_at = now()
+      where slug=${params.slug}
+    `);
+    return NextResponse.json({ ok:true, slug: params.slug });
+  } catch (e:any) {
+    return NextResponse.json({ ok:false, error:e?.message || 'Update failed' }, { status:400 });
+  }
+}
+
+export async function DELETE(_: Request, { params }:{ params:{ slug:string }}) {
+  await db.execute(sql`delete from software where slug=${params.slug}`);
+  return NextResponse.json({ ok:true });
+}
