@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Software {
+  id              String            @id @default(cuid())
+  slug            String            @unique
+  name            String
+  shortDesc       String
+  longDesc        String            @db.Text
+  isFree          Boolean           @default(true)
+  licenseDefault  String            @default("Freeware")
+  website         String?
+  icon            String?
+  hero            String?
+  ratingsAvg      Float             @default(0)
+  ratingsCount    Int               @default(0)
+  status          Status            @default(DRAFT)
+  lastUpdatedAt   DateTime          @updatedAt
+  publishedAt     DateTime?
+  
+  vendorId        String
+  vendor          Vendor            @relation(fields: [vendorId], references: [id])
+  
+  categoryId      String
+  category        Category          @relation(fields: [categoryId], references: [id])
+  
+  versions        SoftwareVersion[]
+  systemReqs      SystemRequirement[]
+  faqs            FAQ[]
+  media           Media[]
+  
+  createdAt       DateTime          @default(now())
+}
+
+model SoftwareVersion {
+  id              String    @id @default(cuid())
+  softwareId      String
+  software        Software  @relation(fields: [softwareId], references: [id])
+  
+  version         String
+  os              OS
+  license         String
+  build           String?
+  releaseDate     DateTime
+  fileSize        BigInt // in bytes
+  checksum        String // SHA-256
+  archivePassword String?
+  changelog       String?   @db.Text
+  downloadUrl     String
+  isFeatured      Boolean   @default(false)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([softwareId, releaseDate])
+}
+
+model SystemRequirement {
+  id           String @id @default(cuid())
+  softwareId   String
+  software     Software @relation(fields: [softwareId], references: [id])
+
+  os           OS
+  minimum      Json
+  recommended  Json
+
+  @@unique([softwareId, os])
+}
+
+model FAQ {
+  id         String   @id @default(cuid())
+  softwareId String
+  software   Software @relation(fields: [softwareId], references: [id])
+
+  question   String
+  answer     String   @db.Text
+  order      Int      @default(0)
+}
+
+model Media {
+  id          String   @id @default(cuid())
+  softwareId  String
+  software    Software @relation(fields: [softwareId], references: [id])
+  type        MediaType
+  url         String
+  caption     String?
+  order       Int      @default(0)
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  icon        String?
+  parentId    String?
+  parent      Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  children    Category[] @relation("SubCategories")
+  softwares   Software[]
+}
+
+model Vendor {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  website     String?
+  isVerified  Boolean    @default(false)
+  softwares   Software[]
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum OS {
+  Windows
+  macOS
+  Linux
+  Android
+  iOS
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
