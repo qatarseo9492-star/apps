@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Software {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  shortDesc        String
+  longDesc         String
+  isFree           Boolean  @default(true)
+  licenseDefault   String?
+  website          String?
+  ratingsAvg       Float    @default(0)
+  ratingsCount     Int      @default(0)
+  iconUrl          String?
+  heroUrl          String?
+  lastUpdatedAt    DateTime @default(now())
+  publishedAt      DateTime?
+  status           String   @default("draft")
+
+  vendor           Vendor?  @relation(fields: [vendorId], references: [id])
+  vendorId         String?
+
+  category         Category? @relation(fields: [categoryId], references: [id])
+  categoryId       String?
+
+  currentVersion   SoftwareVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  currentVersionId String?
+
+  versions         SoftwareVersion[]
+  requirements     SystemRequirement[]
+  faqs             FAQ[]
+  media            Media[]
+  tags             SoftwareTag[]
+  downloadLogs     DownloadLog[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model SoftwareVersion {
+  id              String   @id @default(cuid())
+  software        Software @relation(fields: [softwareId], references: [id])
+  softwareId      String
+  version         String
+  os              String
+  license         String?
+  build           String?
+  releaseDate     DateTime?
+  uploadedAt      DateTime? @default(now())
+  fileSizeBytes   Int
+  checksumSha256  String
+  archivePassword String?
+  changelog       String?
+  downloadUrl     String
+  isFeatured      Boolean @default(false)
+  createdBy       String?
+
+  mirrors         Mirror[]
+  media           Media[]
+
+  createdAt       DateTime @default(now())
+}
+
+model SystemRequirement {
+  id           String   @id @default(cuid())
+  software     Software @relation(fields: [softwareId], references: [id])
+  softwareId   String
+  os           String
+  minimum      Json
+  recommended  Json?
+}
+
+model FAQ {
+  id         String   @id @default(cuid())
+  software   Software @relation(fields: [softwareId], references: [id])
+  softwareId String
+  question   String
+  answer     String
+  order      Int      @default(0)
+}
+
+model Category {
+  id       String @id @default(cuid())
+  name     String
+  slug     String @unique
+  iconUrl  String?
+  parent   Category? @relation("Parent", fields: [parentId], references: [id])
+  parentId String?
+  children Category[] @relation("Parent")
+  software Software[]
+}
+
+model Vendor {
+  id        String @id @default(cuid())
+  name      String
+  slug      String @unique
+  website   String?
+  verified  Boolean @default(false)
+  software  Software[]
+}
+
+model Media {
+  id         String   @id @default(cuid())
+  // If attached to software (screenshots), link softwareId; if specific to a version, set versionId
+  software   Software? @relation(fields: [softwareId], references: [id])
+  softwareId String?
+  version    SoftwareVersion? @relation(fields: [versionId], references: [id])
+  versionId  String?
+  kind       String   // screenshot | video
+  url        String
+  caption    String?
+  order      Int      @default(0)
+}
+
+model Mirror {
+  id         String   @id @default(cuid())
+  version    SoftwareVersion @relation(fields: [versionId], references: [id])
+  versionId  String
+  region     String
+  baseUrl    String
+  latencyMs  Int      @default(0)
+  status     String   @default("unknown")
+}
+
+model DownloadLog {
+  id         String   @id @default(cuid())
+  software   Software @relation(fields: [softwareId], references: [id])
+  softwareId String
+  version    SoftwareVersion @relation(fields: [versionId], references: [id])
+  versionId  String
+  country    String?
+  referrer   String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String
+  slug  String @unique
+  softwares SoftwareTag[]
+}
+
+model SoftwareTag {
+  software   Software @relation(fields: [softwareId], references: [id])
+  softwareId String
+  tag        Tag @relation(fields: [tagId], references: [id])
+  tagId      String
+  @@id([softwareId, tagId])
+}
