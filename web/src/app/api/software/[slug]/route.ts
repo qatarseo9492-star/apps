@@ -1,45 +1,29 @@
-import { NextResponse } from "next/server";
-import { sql } from "@vercel/postgres";
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/db'; // Import the sql instance
+
+// Define a type for the software row for better type safety
+type Software = {
+  id: string;
+  slug: string;
+  name: string;
+  // Add other fields from your database schema as needed
+};
 
 export async function GET(_: Request, { params }: { params: { slug: string } }) {
-  const { rows } = await sql/* sql */`
-    select * from software where slug = ${params.slug} limit 1
-  `;
-  if (!rows.length) {
-    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-  }
-  return NextResponse.json({ ok: true, item: rows[0] });
-}
-
-export async function PUT(req: Request, { params }: { params: { slug: string } }) {
   try {
-    const body = await req.json().catch(() => ({} as any));
+    // Correct usage: Call the `sql` template tag directly.
+    // It returns a promise that resolves with the query result.
+    const result = await sql<Software[]>`SELECT * FROM "Software" WHERE slug = ${params.slug} LIMIT 1`;
 
-    // Coerce arrays/objects to jsonb
-    const osJson = body?.os ? JSON.stringify(body.os) : null;
+    if (result.length === 0) {
+      return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
+    }
 
-    await sql/* sql */`
-      update software set
-        name            = ${body.name ?? null},
-        short_desc      = ${body.shortDesc ?? null},
-        long_desc       = ${body.longDesc ?? null},
-        license         = ${body.license ?? null},
-        os              = ${osJson}::jsonb,
-        vendor_slug     = ${body.vendorSlug ?? null},
-        category_slug   = ${body.categorySlug ?? null},
-        seo_title       = ${body.seoTitle ?? null},
-        seo_description = ${body.seoDescription ?? null},
-        last_updated_at = now()
-      where slug = ${params.slug}
-    `;
+    // The result is the array of rows directly
+    return NextResponse.json({ ok: true, item: result[0] });
 
-    return NextResponse.json({ ok: true, slug: params.slug });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || "Update failed" }, { status: 400 });
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ ok: false, error: 'Internal Server Error' }, { status: 500 });
   }
-}
-
-export async function DELETE(_: Request, { params }: { params: { slug: string } }) {
-  await sql/* sql */`delete from software where slug = ${params.slug}`;
-  return NextResponse.json({ ok: true });
 }
