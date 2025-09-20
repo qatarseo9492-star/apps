@@ -24,15 +24,17 @@ model Software {
   publishedAt      DateTime?
   status           String   @default("draft")
 
-  vendor           Vendor?  @relation(fields: [vendorId], references: [id])
+  vendor           Vendor?   @relation(fields: [vendorId], references: [id])
   vendorId         String?
 
   category         Category? @relation(fields: [categoryId], references: [id])
   categoryId       String?
 
+  /// Current version relation (one-to-one)
   currentVersion   SoftwareVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
   currentVersionId String?
 
+  /// Collections
   versions         SoftwareVersion[]
   requirements     SystemRequirement[]
   faqs             FAQ[]
@@ -48,6 +50,7 @@ model SoftwareVersion {
   id              String   @id @default(cuid())
   software        Software @relation(fields: [softwareId], references: [id])
   softwareId      String
+
   version         String
   os              String
   license         String?
@@ -62,8 +65,17 @@ model SoftwareVersion {
   isFeatured      Boolean @default(false)
   createdBy       String?
 
+  /// Mirrors for this specific version
   mirrors         Mirror[]
+
+  /// Optional media attached specifically to this version
   media           Media[]
+
+  /// Back relation for Software.currentVersion
+  currentFor      Software? @relation("CurrentVersion")
+
+  /// Back relation for DownloadLog.version
+  downloadLogs    DownloadLog[]
 
   createdAt       DateTime @default(now())
 }
@@ -87,9 +99,9 @@ model FAQ {
 }
 
 model Category {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   name     String
-  slug     String @unique
+  slug     String  @unique
   iconUrl  String?
   parent   Category? @relation("Parent", fields: [parentId], references: [id])
   parentId String?
@@ -98,17 +110,18 @@ model Category {
 }
 
 model Vendor {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  slug      String @unique
+  slug      String   @unique
   website   String?
-  verified  Boolean @default(false)
+  verified  Boolean  @default(false)
   software  Software[]
 }
 
 model Media {
   id         String   @id @default(cuid())
-  software   Software? @relation(fields: [softwareId], references: [id])
+  /// If attached to software (screenshots), link softwareId; if specific to a version, set versionId
+  software   Software?        @relation(fields: [softwareId], references: [id])
   softwareId String?
   version    SoftwareVersion? @relation(fields: [versionId], references: [id])
   versionId  String?
@@ -119,7 +132,7 @@ model Media {
 }
 
 model Mirror {
-  id         String   @id @default(cuid())
+  id         String          @id @default(cuid())
   version    SoftwareVersion @relation(fields: [versionId], references: [id])
   versionId  String
   region     String
@@ -129,15 +142,15 @@ model Mirror {
 }
 
 model DownloadLog {
-  id         String   @id @default(cuid())
-  software   Software @relation(fields: [softwareId], references: [id])
+  id         String          @id @default(cuid())
+  software   Software        @relation(fields: [softwareId], references: [id])
   softwareId String
   version    SoftwareVersion @relation(fields: [versionId], references: [id])
   versionId  String
   country    String?
   referrer   String?
   userAgent  String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime        @default(now())
 }
 
 model Tag {
@@ -150,7 +163,7 @@ model Tag {
 model SoftwareTag {
   software   Software @relation(fields: [softwareId], references: [id])
   softwareId String
-  tag        Tag @relation(fields: [tagId], references: [id])
+  tag        Tag      @relation(fields: [tagId], references: [id])
   tagId      String
   @@id([softwareId, tagId])
 }
