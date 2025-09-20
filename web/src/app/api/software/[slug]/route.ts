@@ -1,15 +1,10 @@
-// src/app/api/software/[slug]/route.ts
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET
-export async function GET(
-  _req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(_: Request, { params }: { params: { slug: string } }) {
   const r = await sql/*sql*/`
     SELECT * FROM software
     WHERE slug = ${params.slug}
@@ -21,7 +16,6 @@ export async function GET(
   return NextResponse.json({ ok: true, item: r.rows[0] });
 }
 
-// PUT
 export async function PUT(req: Request, { params }: { params: { slug: string } }) {
   const body = await req.json().catch(() => ({} as any));
   const osJson = Array.isArray(body.os) ? JSON.stringify(body.os) : null;
@@ -40,15 +34,13 @@ export async function PUT(req: Request, { params }: { params: { slug: string } }
       last_updated_at  = NOW()
     WHERE slug = ${params.slug}
   `;
-
   if (res.rowCount === 0) {
     return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
   }
   return NextResponse.json({ ok: true, slug: params.slug });
 }
 
-// DELETE
-export async function DELETE(_req: Request, { params }: { params: { slug: string } }) {
+export async function DELETE(_: Request, { params }: { params: { slug: string } }) {
   const res = await sql/*sql*/`DELETE FROM software WHERE slug = ${params.slug}`;
   if (res.rowCount === 0) {
     return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
